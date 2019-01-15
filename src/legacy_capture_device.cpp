@@ -120,7 +120,6 @@ void LegacyCaptureDevice::datafeed_callback(
 		break;
 	}
 	case SR_DF_END:
-		session_->stop();
 		src_pad_->push_event(Gst::EventEos::create());
 		break;
 	default:
