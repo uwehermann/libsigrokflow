@@ -61,7 +61,7 @@ public:
 
 private:
 	shared_ptr<sigrok::HardwareDevice> libsigrok_device_;
-	Glib::RefPtr<Gst::Pad> src_pad_;
+	Glib::RefPtr<Srf::Pad> src_pad_;
 	Glib::Threads::RecMutex mutex_;
 	Glib::RefPtr<Gst::Task> task_;
 	shared_ptr<sigrok::Session> session_;

@@ -29,6 +29,7 @@
 namespace Srf
 {
 
+using std::make_shared;
 using std::move;
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -63,7 +64,7 @@ LegacyCaptureDevice::LegacyCaptureDevice(GstElement *gobj) :
 	Glib::ObjectBase(typeid(LegacyCaptureDevice)),
 	CaptureDevice(gobj)
 {
-	add_pad(src_pad_ = Gst::Pad::create(get_pad_template("src"), "src"));
+	add_pad(src_pad_ = Srf::Pad::create(get_pad_template("src"), "src"));
 }
 
 Glib::RefPtr<LegacyCaptureDevice>LegacyCaptureDevice::create(
@@ -108,6 +109,8 @@ void LegacyCaptureDevice::datafeed_callback(
 	switch (packet->type()->id()) {
 	case SR_DF_LOGIC: {
 		auto logic = static_pointer_cast<sigrok::Logic>(packet->payload());
+		auto encoding = static_pointer_cast<LegacyLogicDatastreamEncoding>(src_pad_->datastream_->encoding);
+		encoding->unitsize_ = logic->unit_size();
 		auto mem = Gst::Memory::create(
 				Gst::MEMORY_FLAG_READONLY,
 				logic->data_pointer(),
@@ -130,6 +133,23 @@ void LegacyCaptureDevice::datafeed_callback(
 void LegacyCaptureDevice::run()
 {
 	session_ = libsigrok_device_->driver()->parent()->create_session();
+
+	src_pad_->datastream_ = make_shared<Datastream>();
+
+	src_pad_->datastream_->encoding = make_shared<LegacyLogicDatastreamEncoding>();
+
+	for (const auto &channel : libsigrok_device_->channels()) {
+		if (!channel->enabled())
+			continue;
+		if (channel->type() != sigrok::ChannelType::LOGIC)
+			continue;
+
+		auto srf_channel = make_shared<Srf::LogicChannel>(channel->name());
+		auto encoding = make_shared<LegacyLogicChannelEncoding>(channel->index());
+
+		src_pad_->datastream_->channels[srf_channel] = encoding;
+	}
+
 	session_->add_device(libsigrok_device_);
 	session_->add_datafeed_callback(bind(&LegacyCaptureDevice::datafeed_callback, this, _1, _2));
 	session_->start();

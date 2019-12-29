@@ -26,6 +26,13 @@
 namespace Srf
 {
 
+using std::map;
+using std::shared_ptr;
+using std::string;
+using std::vector;
+
+class Datastream;
+
 class Block
 {
 	/* Config API etc. goes here. */
@@ -52,6 +59,76 @@ class CaptureDevice :
 	/* Operations specific to capture (source) devices go here. */
 protected:
 	explicit CaptureDevice(GstElement *gobj);
+};
+
+class Pad :
+	public Gst::Pad
+{
+private:
+	Pad(const Glib::RefPtr<const Gst::PadTemplate>& pad_template, const Glib::ustring& name);
+
+public:
+	static Glib::RefPtr<Pad> create(const Glib::RefPtr<const Gst::PadTemplate>& pad_template, const Glib::ustring& name);
+
+	shared_ptr<Datastream> datastream_;
+};
+
+class ChannelEncoding
+{
+};
+
+class LegacyLogicChannelEncoding :
+	public ChannelEncoding
+{
+public:
+	LegacyLogicChannelEncoding(uint32_t bit_index);
+
+private:
+	uint32_t bit_index_;
+};
+
+class LegacyAnalogChannelEncoding :
+	public ChannelEncoding
+{
+};
+
+class Channel
+{
+public:
+	Channel(string name);
+
+	string name_;
+};
+
+class LogicChannel :
+	public Channel
+{
+public:
+	LogicChannel(string name);
+};
+
+class AnalogChannel :
+	public Channel
+{
+};
+
+class DatastreamEncoding
+{
+};
+
+class LegacyLogicDatastreamEncoding :
+	public DatastreamEncoding
+{
+public:
+	uint32_t unitsize_;
+};
+
+class Datastream
+{
+public:
+	map<shared_ptr<Channel>, shared_ptr<ChannelEncoding>> channels;
+
+	shared_ptr<DatastreamEncoding> encoding;
 };
 
 }

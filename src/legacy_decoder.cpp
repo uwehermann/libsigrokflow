@@ -27,6 +27,7 @@ namespace Srf
 {
 
 using std::runtime_error;
+using std::static_pointer_cast;
 
 #ifdef HAVE_LIBSIGROKDECODE
 void LegacyDecoder::class_init(Gst::ElementClass<LegacyDecoder> *klass)
@@ -84,6 +85,12 @@ Gst::FlowReturn LegacyDecoder::render_vfunc(const Glib::RefPtr<Gst::Buffer> &buf
 {
 	Gst::MapInfo info;
 	buffer->map(info, Gst::MAP_READ);
+
+	auto sink_pad = get_sink_pad();
+	auto src_pad = sink_pad->get_peer();
+	auto s = Glib::RefPtr<Srf::Pad>::cast_static(src_pad);
+	auto encoding = static_pointer_cast<LegacyLogicDatastreamEncoding>(s->datastream_->encoding);
+
 	uint64_t num_samples = info.get_size() / unitsize_;
 	srd_session_send(session_, abs_ss_, abs_ss_ + num_samples,
 		info.get_data(), info.get_size(), unitsize_);

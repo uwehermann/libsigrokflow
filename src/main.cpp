@@ -40,4 +40,31 @@ CaptureDevice::CaptureDevice(GstElement *gobj) :
 {
 }
 
+LegacyLogicChannelEncoding::LegacyLogicChannelEncoding(uint32_t bit_index) :
+	bit_index_(bit_index)
+{
+}
+
+Channel::Channel(string name) :
+	name_(name)
+{
+}
+
+LogicChannel::LogicChannel(string name) :
+	Channel(name)
+{
+}
+
+Pad::Pad(const Glib::RefPtr<const Gst::PadTemplate>& pad_template, const Glib::ustring& name) :
+	Gst::Pad(pad_template, name)
+{
+}
+
+Glib::RefPtr<Pad> Pad::create(const Glib::RefPtr<const Gst::PadTemplate>& pad_template,
+		const Glib::ustring& name)
+{
+	// Create a new Srf::Pad, wrap it in GLib::RefPtr and return that.
+	return Glib::RefPtr<Pad>(new Pad(pad_template, name));
+}
+
 }
